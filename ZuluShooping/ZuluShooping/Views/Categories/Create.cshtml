@@ -1,0 +1,31 @@
+﻿@model ZuluShooping.Data.Entities.Category
+
+@{
+    ViewData["Title"] = "Crear";
+}
+
+<h1>Crear</h1>
+
+<h4>Categoría</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <partial name="_Category"/>
+
+            <div class="form-group">
+                <input type="submit" value="Crear" class="btn btn-outline-primary" style="margin-top: 8px;" />
+                <a asp-action="Index" class="btn btn-outline-danger" style="margin-top: 8px;">Regresar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
