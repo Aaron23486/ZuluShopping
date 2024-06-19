@@ -3,22 +3,83 @@
 @{
     ViewData["Title"] = "Detalles";
 }
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" />
 
 <h1>@ViewData["Title"]</h1>
 
 <div>
     <h4>de @Html.DisplayFor(model => model.Name)</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-    </dl>
+
+     <partial name="_CountryDetails"/>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-outline-warning">Editar</a>
+    <a asp-action="AddProvince" asp-route-id="@Model?.Id" class="btn btn-outline-primary">Agregar Provincia</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-outline-warning">Editar País</a>
     <a asp-action="Index" class="btn btn-outline-danger">Regresar</a>
 </div>
+<hr/>
+
+<div class="row">
+	<div class="col-md-12">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+			</div>
+			<div class="panel-body">
+				<table class="table table-hover table-responsive table-striped" id="MyTable">
+
+					<thead>
+						<tr>
+							<th>
+								@Html.DisplayNameFor(model => model.Provinces.FirstOrDefault().Name)
+							</th>
+							<th>
+								@Html.DisplayNameFor(model => model.Provinces.FirstOrDefault().CantonesNumber)
+							</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var item in Model.Provinces)
+						{
+							<tr>
+								<td>
+									@Html.DisplayFor(modelItem => item.Name)
+								</td>
+								<td>
+									@Html.DisplayFor(modelItem => item.CantonesNumber)
+								</td>
+								<td>
+									<a asp-action="EditProvince" asp-route-id="@item.Id" class="btn btn-outline-warning">Editar</a>
+									<a asp-action="DetailsProvince" asp-route-id="@item.Id" class="btn btn-outline-info">Detalles</a>
+									<a asp-action="DeleteProvince" asp-route-id="@item.Id" class="btn btn-outline-danger">Borrar</a>
+								</td>
+							</tr>
+						}
+					</tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+	<script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+
+	<script type="text/javascript">
+		$(document).ready(function () {
+			$('#MyTable').DataTable({
+				"language": {
+					"url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json"
+				},
+				"aLengthMenu": [
+					[25, 50, 100, 200, - 1],
+					[25, 50, 100, 200, "Todos"]
+				]
+			});
+		});
+	</script>
+}

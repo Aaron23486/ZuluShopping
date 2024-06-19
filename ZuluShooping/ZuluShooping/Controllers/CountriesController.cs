@@ -8,6 +8,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ZuluShooping.Data;
 using ZuluShooping.Data.Entities;
+using ZuluShooping.Models;
 
 namespace ZuluShooping.Controllers
 {
@@ -23,18 +24,24 @@ namespace ZuluShooping.Controllers
         // GET: Countries
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Countries.ToListAsync());
+            
+            return View(await _context.Countries
+                .Include(c => c.Provinces)
+                .ToListAsync());
         }
 
         // GET: Countries/Details/5
         public async Task<IActionResult> Details(int? id)
         {
+
+
             if (id == null) 
             {
                 return NotFound();
             }
 
             var country = await _context.Countries
+                .Include(c => c.Provinces)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (country == null)
             {
@@ -46,13 +53,14 @@ namespace ZuluShooping.Controllers
 
         public IActionResult Create()
         {
-            return View();
+            Country country = new() {Provinces = new List<Province>() };
+            return View(country);
         }
 
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create([Bind("Id,Name")] Country country)
+		public async Task<IActionResult> Create(Country country)
 		{
 			if (ModelState.IsValid)
 			{
@@ -143,7 +151,9 @@ namespace ZuluShooping.Controllers
                 return NotFound();
             }
 
-            var country = await _context.Countries.FindAsync(id);
+            var country = await _context.Countries
+                .Include(c => c.Provinces)
+                .FirstOrDefaultAsync(c => c.Id == id);
             if (country == null)
             {
                 return NotFound();
@@ -171,5 +181,136 @@ namespace ZuluShooping.Controllers
         {
             return _context.Countries.Any(e => e.Id == id);
         }
-    }
+
+
+        //-----------------------------------------------------------------------------------------------------//
+
+
+        public async Task<IActionResult> AddProvince(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            Country country = await _context.Countries.FindAsync(id);
+            if (country == null)
+            {
+                return NotFound();
+            }
+
+            ProvinceViewModel model = new()
+            {
+                CountryId = country.Id,
+            };
+
+            return View(model);
+        }
+
+        // POST: Countries/AddProvince
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddProvince(ProvinceViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    Province province = new()
+                    {
+                        Cantones = new List<Canton>(),
+                        Country = await _context.Countries.FindAsync(model.CountryId),
+                        Name = model.Name,
+                    };
+                    _context.Add(province);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Details), new {Id = model.CountryId });
+                }
+                catch (DbUpdateException dbUpdateException)
+                {
+                    if (dbUpdateException.InnerException.Message.Contains("duplicate"))
+                    {
+                        ModelState.AddModelError(string.Empty, "Ya existe una Provincia con el mismo nombre.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, dbUpdateException.InnerException.Message);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    ModelState.AddModelError(string.Empty, exception.Message);
+                }
+            }
+            return View(model);
+        }
+
+
+		public async Task<IActionResult> EditProvince(int? id)
+		{
+			if (id == null)
+			{
+				return NotFound();
+			}
+
+			Province province = await _context.Provinces
+                .Include(p => p.Country)
+                .FirstOrDefaultAsync(p => p.Id == id);
+			if (province == null)
+			{
+				return NotFound();
+			}
+
+            ProvinceViewModel model = new()
+            {
+                CountryId = province.Country.Id,
+                Id = province.Id,
+                Name = province.Name,
+            };
+
+			return View(model);
+		}
+
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> EditProvince(int id, ProvinceViewModel model)
+		{
+			if (id != model.Id)
+			{
+				return NotFound();
+			}
+
+			if (ModelState.IsValid)
+			{
+				try
+				{
+                    Province province =  new()
+                    {
+                        Id = model.Id,
+                        Name = model.Name,
+                    };
+					_context.Update(province);
+					await _context.SaveChangesAsync();
+					return RedirectToAction(nameof(Details), new { Id = model.CountryId});
+				}
+				catch (DbUpdateException dbUpdateException)
+				{
+					if (dbUpdateException.InnerException.Message.Contains("duplicate"))
+					{
+						ModelState.AddModelError(string.Empty, "Ya existe una Provincia con el mismo nombre.");
+					}
+					else
+					{
+						ModelState.AddModelError(string.Empty, dbUpdateException.InnerException.Message);
+					}
+				}
+				catch (Exception exception)
+				{
+					ModelState.AddModelError(string.Empty, exception.Message);
+				}
+			}
+			return View(model);
+		}
+	}
 }
